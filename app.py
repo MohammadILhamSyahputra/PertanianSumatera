@@ -52,17 +52,28 @@ def plot_to_base64():
 # ==============================================
 
 def plot_tren_produksi():
-    """Diagram Garis: Tren Produksi per Provinsi (1993-2020)"""
-    provinsi_pilih = ['Sumatera Utara', 'Sumatera Selatan', 'Aceh', 'Lampung']
-    plt.figure(figsize=(12, 6))
-    for prov in provinsi_pilih:
+    plt.figure(figsize=(14, 7))
+    daftar_provinsi = data['Provinsi'].unique()
+    colors = plt.cm.get_cmap('tab20', len(daftar_provinsi))
+    for i, prov in enumerate(daftar_provinsi):
         subset = data[data['Provinsi'] == prov].sort_values('Tahun')
-        plt.plot(subset['Tahun'], subset['Produksi'], marker='o', label=prov)
-    plt.xlabel('Tahun')
-    plt.ylabel('Produksi (ton)')
-    plt.title('Tren Produksi Padi per Provinsi')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
+        
+        plt.plot(
+            subset['Tahun'], 
+            subset['Produksi'], 
+            marker='o', 
+            markersize=4, 
+            linewidth=1.5,
+            label=prov,
+            color=colors(i)
+        )
+    plt.xlabel('Tahun', fontsize=12)
+    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.title('Tren Produksi Padi Seluruh Provinsi di Sumatera', fontsize=14)
+    plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
     return save_plot_as_png('tren_produksi.png')
 
 def plot_rata_produksi():
@@ -103,6 +114,68 @@ def plot_korelasi_luas_produksi():
     plt.tight_layout()
     return save_plot_as_png('korelasi_luas.png')
 
+def plot_scatter_curah():
+    plt.figure(figsize=(12, 6))
+    daftar_provinsi = data['Provinsi'].unique()
+    colors = plt.cm.get_cmap('tab10', len(daftar_provinsi))
+    for i, prov in enumerate(daftar_provinsi):
+        subset = data[data['Provinsi'] == prov]
+        
+        plt.scatter(
+            subset['Curah hujan'], 
+            subset['Produksi'], 
+            alpha=0.7, 
+            label=prov,
+            color=colors(i),
+            edgecolors='w', 
+            s=60
+        )
+    plt.title('Hubungan Curah Hujan dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
+    plt.xlabel('Curah Hujan (mm)', fontsize=12)
+    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return save_plot_as_png('scatter_curah.png')
+
+def plot_histogram_produksi():
+    plt.figure(figsize=(10, 6))
+    plt.hist(data['Produksi'], bins=20, edgecolor='black', alpha=0.7, color='skyblue')
+    plt.xlabel('Produksi (ton)')
+    plt.ylabel('Frekuensi')
+    plt.title('Histogram Distribusi Produksi Padi')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    return save_plot_as_png('histogram_produksi.png')
+
+def plot_perbandingan_produksi_curah():
+    agregat = data.groupby('Provinsi').agg({
+        'Produksi': 'sum',
+        'Luas Panen': 'sum',
+        'Curah hujan': 'mean'
+    }).sort_values('Produksi', ascending=False)
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    agregat['Produksi'].plot(
+        kind='bar', ax=ax, color='blue', alpha=0.7,
+        label='Total Produksi (ton)'
+    )
+    ax.set_ylabel('Total Produksi (ton)', fontsize=12)
+    ax.set_xlabel('Provinsi', fontsize=12)
+    ax2 = ax.twinx()
+    agregat['Curah hujan'].plot(
+        kind='line', ax=ax2, color='red', marker='o', linewidth=2,
+        label='Rata-rata Curah Hujan (mm)'
+    )
+    ax2.set_ylabel('Rata-rata Curah Hujan (mm)', fontsize=12)
+    
+    plt.title('Perbandingan Total Produksi dan Rata-rata Curah Hujan per Provinsi', fontsize=14)
+    ax.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    
+    return save_plot_as_png('perbandingan_produksi_curah.png')
+
 # ==============================================
 # 4. ROUTE UTAMA DASHBOARD
 # ==============================================
@@ -113,6 +186,10 @@ def dashboard():
         img_tren = plot_tren_produksi()
         img_rata = plot_rata_produksi()
         img_scatter = plot_korelasi_luas_produksi()
+        img_scatter_curah = plot_scatter_curah()
+        img_hist = plot_histogram_produksi()
+        img_perbandingan = plot_perbandingan_produksi_curah()
+        
     except Exception as e:
         return f"Terjadi error saat membuat grafik: {str(e)}", 500
 
@@ -128,6 +205,9 @@ def dashboard():
         img_tren=img_tren,
         img_rata=img_rata,
         img_scatter=img_scatter,
+        img_scatter_curah=img_scatter_curah,
+        img_hist=img_hist,
+        img_perbandingan=img_perbandingan,
         stats_produksi=stats_produksi,
         stats_luas=stats_luas,
         stats_curah=stats_curah,
