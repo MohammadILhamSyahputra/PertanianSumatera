@@ -67,7 +67,7 @@ def plot_tren_produksi():
 
 def plot_rata_produksi():
     rata_produksi = data.groupby('Provinsi')['Produksi'].mean().sort_values(ascending=False)
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 6))
     warna = plt.cm.Greens(np.linspace(0.3, 0.9, len(rata_produksi)))
     plt.bar(rata_produksi.index, rata_produksi.values, color=warna)
     plt.xlabel('Provinsi')
@@ -76,6 +76,32 @@ def plot_rata_produksi():
     plt.xticks(rotation=45, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.6)
     return save_plot_as_png('rata_produksi.png')
+
+def plot_korelasi_luas_produksi():
+    plt.figure(figsize=(12, 6))
+    daftar_provinsi = data['Provinsi'].unique()
+    colors = plt.cm.get_cmap('tab10', len(daftar_provinsi))
+
+    for i, prov in enumerate(daftar_provinsi):
+        subset = data[data['Provinsi'] == prov]
+        
+        plt.scatter(
+            subset['Luas Panen'], 
+            subset['Produksi'], 
+            alpha=0.7, 
+            label=prov,
+            color=colors(i),
+            edgecolors='w', 
+            s=60            
+        )
+
+    plt.title('Korelasi Luas Panen vs Produksi Padi Berdasarkan Provinsi', fontsize=14)
+    plt.xlabel('Luas Panen (ha)', fontsize=12)
+    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return save_plot_as_png('korelasi_luas.png')
 
 # ==============================================
 # 4. ROUTE UTAMA DASHBOARD
@@ -86,6 +112,7 @@ def dashboard():
     try:
         img_tren = plot_tren_produksi()
         img_rata = plot_rata_produksi()
+        img_scatter = plot_korelasi_luas_produksi()
     except Exception as e:
         return f"Terjadi error saat membuat grafik: {str(e)}", 500
 
@@ -100,6 +127,7 @@ def dashboard():
         'dashboard.html',
         img_tren=img_tren,
         img_rata=img_rata,
+        img_scatter=img_scatter,
         stats_produksi=stats_produksi,
         stats_luas=stats_luas,
         stats_curah=stats_curah,
