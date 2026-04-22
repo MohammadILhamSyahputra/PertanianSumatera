@@ -8,6 +8,7 @@ import io
 import base64
 from datetime import datetime
 import os
+import seaborn as sns
 
 app = Flask(__name__)
 
@@ -76,6 +77,17 @@ def plot_tren_produksi():
     plt.tight_layout()
     return save_plot_as_png('tren_produksi.png')
 
+def plot_distribusi_kelembapan():
+    plt.figure(figsize=(12, 6))
+    data_clean = data.dropna(subset=['Kelembapan'])
+    
+    sns.boxplot(x='Provinsi', y='Kelembapan', data=data_clean, palette='GnBu')
+    plt.xticks(rotation=45, ha='right')
+    plt.title('Variasi dan Distribusi Kelembapan per Provinsi')
+    plt.ylabel('Kelembapan (%)')
+    
+    return save_plot_as_png('distribusi_kelembapan.png')
+
 def plot_rata_produksi():
     rata_produksi = data.groupby('Provinsi')['Produksi'].mean().sort_values(ascending=False)
     plt.figure(figsize=(12, 6))
@@ -106,7 +118,7 @@ def plot_korelasi_luas_produksi():
             s=60            
         )
 
-    plt.title('Korelasi Luas Panen vs Produksi Padi Berdasarkan Provinsi', fontsize=14)
+    plt.title('Hubungan Luas Panen vs Produksi Padi Berdasarkan Provinsi', fontsize=14)
     plt.xlabel('Luas Panen (ha)', fontsize=12)
     plt.ylabel('Produksi (ton)', fontsize=12)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -176,6 +188,37 @@ def plot_perbandingan_produksi_curah():
     
     return save_plot_as_png('perbandingan_produksi_curah.png')
 
+def plot_proporsi_per_tahun(tahun):
+    data_tahun = data[data['Tahun'] == tahun].copy()
+
+    if data_tahun.empty:
+        return None 
+    
+    idx_maks = data_tahun['Produksi'].argmax()
+    explode_list = [0] * len(data_tahun)
+    explode_list[idx_maks] = 0.1
+    
+    fig = plt.figure(figsize=(8, 8), dpi=100)
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    
+    ax.pie(
+        data_tahun['Produksi'], 
+        labels=data_tahun['Provinsi'], 
+        autopct='%1.1f%%', 
+        startangle=140, 
+        explode=explode_list,
+        colors=plt.cm.Paired(np.linspace(0, 1, len(data_tahun)))
+    )
+    
+    ax.set_title(f'Proporsi Produksi Padi Sumatera ({tahun})', pad=20, fontsize=14)
+    
+    filename = f'proporsi_{tahun}.png'
+    filepath = os.path.join(IMAGE_FOLDER, filename)
+    plt.savefig(filepath) 
+    plt.close()
+    
+    return url_for('static', filename=f'images/{filename}')
+
 # ==============================================
 # 4. ROUTE UTAMA DASHBOARD
 # ==============================================
@@ -189,6 +232,9 @@ def dashboard():
         img_scatter_curah = plot_scatter_curah()
         img_hist = plot_histogram_produksi()
         img_perbandingan = plot_perbandingan_produksi_curah()
+        img_pie_1993 = plot_proporsi_per_tahun(1993)
+        img_pie_2020 = plot_proporsi_per_tahun(2020)
+        img_distribusi_kelembapan = plot_distribusi_kelembapan()
         
     except Exception as e:
         return f"Terjadi error saat membuat grafik: {str(e)}", 500
@@ -215,7 +261,11 @@ def dashboard():
         stats_suhu=stats_suhu,
         tahun_min=int(data['Tahun'].min()),
         tahun_max=int(data['Tahun'].max()),
-        provinsi_count=data['Provinsi'].nunique()
+        provinsi_count=data['Provinsi'].nunique(),
+        img_pie_1993=img_pie_1993,
+        img_pie_2020=img_pie_2020,
+        img_distribusi_kelembapan=img_distribusi_kelembapan
+        
     )
 
 if __name__ == '__main__':
