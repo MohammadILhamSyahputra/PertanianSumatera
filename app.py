@@ -68,7 +68,7 @@ def plot_tren_produksi():
             color=colors(i)
         )
     plt.xlabel('Tahun', fontsize=12)
-    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.ylabel('Produksi (juta ton)', fontsize=12)
     plt.title('Tren Produksi Padi Seluruh Provinsi di Sumatera', fontsize=14)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
     
@@ -82,7 +82,7 @@ def plot_rata_produksi():
     warna = plt.cm.Greens(np.linspace(0.3, 0.9, len(rata_produksi)))
     plt.bar(rata_produksi.index, rata_produksi.values, color=warna)
     plt.xlabel('Provinsi')
-    plt.ylabel('Rata-rata Produksi (ton)')
+    plt.ylabel('Rata-rata Produksi (juta ton)')
     plt.title('Rata-rata Produksi Padi per Provinsi')
     plt.xticks(rotation=45, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.6)
@@ -108,7 +108,7 @@ def plot_korelasi_luas_produksi():
 
     plt.title('Hubungan Luas Panen vs Produksi Padi Berdasarkan Provinsi', fontsize=14)
     plt.xlabel('Luas Panen (ha)', fontsize=12)
-    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.ylabel('Produksi (juta ton)', fontsize=12)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -132,7 +132,7 @@ def plot_scatter_curah():
         )
     plt.title('Hubungan Curah Hujan dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
     plt.xlabel('Curah Hujan (mm)', fontsize=12)
-    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.ylabel('Produksi (juta ton)', fontsize=12)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -156,7 +156,7 @@ def plot_scatter_kelembapan():
         )
     plt.title('Hubungan Kelembapan dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
     plt.xlabel('Kelembapan (%)', fontsize=12)
-    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.ylabel('Produksi (juta ton)', fontsize=12)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -180,7 +180,7 @@ def plot_scatter_suhu():
         )
     plt.title('Hubungan Suhu Rata-Rata dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
     plt.xlabel('Suhu Rata-Rata (°C)', fontsize=12)
-    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.ylabel('Produksi (juta ton)', fontsize=12)
     plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -189,7 +189,7 @@ def plot_scatter_suhu():
 def plot_histogram_produksi():
     plt.figure(figsize=(10, 6))
     plt.hist(data['Produksi'], bins=20, edgecolor='black', alpha=0.7, color='skyblue')
-    plt.xlabel('Produksi (ton)')
+    plt.xlabel('Produksi (juta ton)')
     plt.ylabel('Frekuensi')
     plt.title('Histogram Distribusi Produksi Padi')
     plt.grid(axis='y', linestyle='--', alpha=0.6)
@@ -197,18 +197,19 @@ def plot_histogram_produksi():
 
 def plot_perbandingan_produksi_curah():
     agregat = data.groupby('Provinsi').agg({
-        'Produksi': 'sum',
-        'Luas Panen': 'sum',
+        'Produksi': 'mean',
+        'Luas Panen': 'mean',
         'Curah hujan': 'mean'
     }).sort_values('Produksi', ascending=False)
     
     fig, ax = plt.subplots(figsize=(12, 6))
-    agregat['Produksi'].plot(
+    (agregat['Produksi'] / 1_000_000).plot(
         kind='bar', ax=ax, color='blue', alpha=0.7,
-        label='Total Produksi (ton)'
+        label='Rata-rata Produksi (juta ton)'
     )
-    ax.set_ylabel('Total Produksi (ton)', fontsize=12)
+    ax.set_ylabel('Rata-rata Produksi (juta ton)', fontsize=12)
     ax.set_xlabel('Provinsi', fontsize=12)
+    
     ax2 = ax.twinx()
     agregat['Curah hujan'].plot(
         kind='line', ax=ax2, color='red', marker='o', linewidth=2,
@@ -216,7 +217,8 @@ def plot_perbandingan_produksi_curah():
     )
     ax2.set_ylabel('Rata-rata Curah Hujan (mm)', fontsize=12)
     
-    plt.title('Perbandingan Total Produksi dan Rata-rata Curah Hujan per Provinsi', fontsize=14)
+    plt.title('Perbandingan Rata-rata Produksi dan Rata-rata Curah Hujan per Provinsi', fontsize=14)
+    
     ax.legend(loc='upper left')
     ax2.legend(loc='upper right')
     plt.xticks(rotation=45, ha='right')
@@ -255,6 +257,18 @@ def plot_proporsi_per_tahun(tahun):
     
     return url_for('static', filename=f'images/{filename}')
 
+def plot_produktivitas():
+    data['Produktivitas'] = data['Produksi'] / data['Luas Panen']
+    rata_prod = data.groupby('Provinsi')['Produktivitas'].mean().sort_values()
+    
+    plt.figure(figsize=(12, 6))
+    rata_prod.plot(kind='barh', color='orange')
+    plt.xlabel('Produktivitas (Ton/Ha)')
+    plt.title('Rata-rata Produktivitas Padi per Hektar per Provinsi')
+    plt.tight_layout()
+    
+    return save_plot_as_png('produktivitas.png')
+
 # ==============================================
 # 4. ROUTE UTAMA DASHBOARD
 # ==============================================
@@ -272,6 +286,7 @@ def dashboard():
         img_pie_2020 = plot_proporsi_per_tahun(2020)
         img_scatter_kelembapan = plot_scatter_kelembapan()
         img_scatter_suhu = plot_scatter_suhu()
+        img_produktivitas = plot_produktivitas()
         
     except Exception as e:
         return f"Terjadi error saat membuat grafik: {str(e)}", 500
@@ -302,6 +317,7 @@ def dashboard():
         img_pie_1993=img_pie_1993,
         img_pie_2020=img_pie_2020,
         img_scatter_kelembapan=img_scatter_kelembapan,
+        img_produktivitas=img_produktivitas,
         img_scatter_suhu=img_scatter_suhu
         
     )
