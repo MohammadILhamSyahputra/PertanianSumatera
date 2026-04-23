@@ -77,17 +77,6 @@ def plot_tren_produksi():
     plt.tight_layout()
     return save_plot_as_png('tren_produksi.png')
 
-def plot_distribusi_kelembapan():
-    plt.figure(figsize=(12, 6))
-    data_clean = data.dropna(subset=['Kelembapan'])
-    
-    sns.boxplot(x='Provinsi', y='Kelembapan', data=data_clean, palette='GnBu')
-    plt.xticks(rotation=45, ha='right')
-    plt.title('Variasi dan Distribusi Kelembapan per Provinsi')
-    plt.ylabel('Kelembapan (%)')
-    
-    return save_plot_as_png('distribusi_kelembapan.png')
-
 def plot_rata_produksi():
     rata_produksi = data.groupby('Provinsi')['Produksi'].mean().sort_values(ascending=False)
     plt.figure(figsize=(12, 6))
@@ -149,6 +138,54 @@ def plot_scatter_curah():
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
     return save_plot_as_png('scatter_curah.png')
+
+def plot_scatter_kelembapan():
+    plt.figure(figsize=(12, 6))
+    daftar_provinsi = data['Provinsi'].unique()
+    colors = plt.cm.get_cmap('tab10', len(daftar_provinsi))
+    for i, prov in enumerate(daftar_provinsi):
+        subset = data[data['Provinsi'] == prov]
+        
+        plt.scatter(
+            subset['Kelembapan'], 
+            subset['Produksi'], 
+            alpha=0.7, 
+            label=prov,
+            color=colors(i),
+            edgecolors='w', 
+            s=60
+        )
+    plt.title('Hubungan Kelembapan dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
+    plt.xlabel('Kelembapan (%)', fontsize=12)
+    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return save_plot_as_png('scatter_kelembapan.png')
+
+def plot_scatter_suhu():
+    plt.figure(figsize=(12, 6))
+    daftar_provinsi = data['Provinsi'].unique()
+    colors = plt.cm.get_cmap('tab10', len(daftar_provinsi))
+    for i, prov in enumerate(daftar_provinsi):
+        subset = data[data['Provinsi'] == prov]
+        
+        plt.scatter(
+            subset['Suhu rata-rata'], 
+            subset['Produksi'], 
+            alpha=0.7, 
+            label=prov,
+            color=colors(i),
+            edgecolors='w', 
+            s=60
+        )
+    plt.title('Hubungan Suhu Rata-Rata dengan Produksi Padi Berdasarkan Provinsi', fontsize=14)
+    plt.xlabel('Suhu Rata-Rata (°C)', fontsize=12)
+    plt.ylabel('Produksi (ton)', fontsize=12)
+    plt.legend(title="Provinsi", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return save_plot_as_png('scatter_suhu.png')
 
 def plot_histogram_produksi():
     plt.figure(figsize=(10, 6))
@@ -234,7 +271,8 @@ def dashboard():
         img_perbandingan = plot_perbandingan_produksi_curah()
         img_pie_1993 = plot_proporsi_per_tahun(1993)
         img_pie_2020 = plot_proporsi_per_tahun(2020)
-        img_distribusi_kelembapan = plot_distribusi_kelembapan()
+        img_scatter_kelembapan = plot_scatter_kelembapan()
+        img_scatter_suhu = plot_scatter_suhu()
         
     except Exception as e:
         return f"Terjadi error saat membuat grafik: {str(e)}", 500
@@ -264,7 +302,8 @@ def dashboard():
         provinsi_count=data['Provinsi'].nunique(),
         img_pie_1993=img_pie_1993,
         img_pie_2020=img_pie_2020,
-        img_distribusi_kelembapan=img_distribusi_kelembapan
+        img_scatter_kelembapan=img_scatter_kelembapan,
+        img_scatter_suhu=img_scatter_suhu
         
     )
 
