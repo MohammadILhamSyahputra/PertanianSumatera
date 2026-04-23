@@ -8,7 +8,6 @@ import io
 import base64
 from datetime import datetime
 import os
-import seaborn as sns
 
 app = Flask(__name__)
 
