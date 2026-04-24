@@ -2,7 +2,7 @@ from flask import Flask, render_template, url_for
 import pandas as pd
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Hindari error di environment server
+matplotlib.use('Agg')  
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -15,12 +15,8 @@ IMAGE_FOLDER = 'static/images'
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
 
-# ==============================================
-# 1. BACA DATASET YANG SUDAH BERSIH
-# ==============================================
 data = pd.read_csv('Data_Tanaman_Padi_Sumatera_praproses.csv')
 
-# Pastikan kolom numerik dalam format float
 kolom_numerik = ['Produksi', 'Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata']
 for col in kolom_numerik:
     data[col] = pd.to_numeric(data[col], errors='coerce')
@@ -35,9 +31,6 @@ def save_plot_as_png(filename):
     plt.close()
     return url_for('static', filename=f'images/{filename}')
 
-# ==============================================
-# 2. FUNGSI BANTU UNTUK MEMBUAT PLOT JADI BASE64
-# ==============================================
 def plot_to_base64():
     """Mengubah plot matplotlib menjadi format Base64 untuk ditampilkan di HTML"""
     img = io.BytesIO()
@@ -46,10 +39,6 @@ def plot_to_base64():
     plot_url = base64.b64encode(img.getvalue()).decode()
     plt.close()
     return plot_url
-
-# ==============================================
-# 3. FUNGSI PEMBUATAN GRAFIK
-# ==============================================
 
 def plot_tren_produksi():
     plt.figure(figsize=(14, 7))
@@ -269,9 +258,6 @@ def plot_produktivitas():
     
     return save_plot_as_png('produktivitas.png')
 
-# ==============================================
-# 4. ROUTE UTAMA DASHBOARD
-# ==============================================
 @app.route('/')
 def dashboard():
     """Halaman utama dashboard menampilkan semua grafik"""
@@ -297,6 +283,8 @@ def dashboard():
     stats_curah = data['Curah hujan'].describe().to_dict()
     stats_kelembapan = data['Kelembapan'].describe().to_dict()
     stats_suhu = data['Suhu rata-rata'].describe().to_dict()
+    data_head = data.head(5).to_html(classes='table table-bordered table-striped', index=False)
+    data_tail = data.tail(5).to_html(classes='table table-bordered table-striped', index=False)
 
     return render_template(
         'dashboard.html',
@@ -318,8 +306,9 @@ def dashboard():
         img_pie_2020=img_pie_2020,
         img_scatter_kelembapan=img_scatter_kelembapan,
         img_produktivitas=img_produktivitas,
-        img_scatter_suhu=img_scatter_suhu
-        
+        img_scatter_suhu=img_scatter_suhu,
+        tabel_head=data_head,
+        tabel_tail=data_tail
     )
 
 if __name__ == '__main__':
