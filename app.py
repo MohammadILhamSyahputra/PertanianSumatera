@@ -283,8 +283,8 @@ def dashboard():
     stats_curah = data['Curah hujan'].describe().to_dict()
     stats_kelembapan = data['Kelembapan'].describe().to_dict()
     stats_suhu = data['Suhu rata-rata'].describe().to_dict()
-    data_head = data.head(5).to_html(classes='table table-bordered table-striped', index=False)
-    data_tail = data.tail(5).to_html(classes='table table-bordered table-striped', index=False)
+    data_head = data.head(5).drop(columns=['Produktivitas']).to_html(classes='table table-bordered table-striped', index=False)
+    data_tail = data.tail(5).drop(columns=['Produktivitas']).to_html(classes='table table-bordered table-striped', index=False)
 
     return render_template(
         'dashboard.html',
